@@ -1,3 +1,5 @@
+SHARED_CFLAGS = -fobjc-arc
+
 include theos/makefiles/common.mk
 
 TWEAK_NAME = StatusBarTimer
