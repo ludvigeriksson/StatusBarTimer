@@ -1,6 +1,8 @@
 static NSString *path = @"/var/mobile/Library/Preferences/com.ludvigeriksson.statusbartimer.plist";
 static long tempTimeLeft = 0;
 
+static NSString *separator = @"-"; // Default separator
+
 %hook TimerViewController
 
 - (void)saveState {
@@ -28,7 +30,6 @@ static long tempTimeLeft = 0;
 %hook TimerControlsView
 
 - (void)setState:(int)fp8 {
-    %log;
 
     if (fp8 == 1) {
 
@@ -111,7 +112,7 @@ static NSString *stringFromTime(double interval) {
     NSDateFormatter* timeItemDateFormatter = MSHookIvar<NSDateFormatter*>(self, "_timeItemDateFormatter");
 
     NSString *dateFormat = @"HH:mm";
-    NSString *append = timeLeft ? [NSString stringWithFormat:@" - '%@'", stringFromTime(timeLeft)] : @"";
+    NSString *append = timeLeft ? [NSString stringWithFormat:@" '%@ %@'", separator, stringFromTime(timeLeft)] : @"";
     dateFormat = [dateFormat stringByAppendingString:append];
 
     [timeItemDateFormatter setDateFormat:dateFormat];
@@ -130,3 +131,15 @@ static NSString *stringFromTime(double interval) {
 
 %end
 
+static void loadPrefs() {
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.ludvigeriksson.statusbartimerprefs.plist"];
+    if(prefs) {
+        separator = prefs[@"SBTSeparator"] ? prefs[@"SBTSeparator"] : separator;
+    }
+}
+
+%ctor
+{
+CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+loadPrefs();
+}
