@@ -1,4 +1,5 @@
 SHARED_CFLAGS = -fobjc-arc
+ARCHS = armv7 arm64
 
 include theos/makefiles/common.mk
 
