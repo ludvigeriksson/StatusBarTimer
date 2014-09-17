@@ -1,5 +1,4 @@
 static NSString *path = @"/var/mobile/Library/Preferences/com.ludvigeriksson.statusbartimer.plist";
-static long tempTimeLeft = 0;
 
 static NSString *separator = @"-"; // Default separator
 
@@ -27,16 +26,43 @@ static NSString *separator = @"-"; // Default separator
 
 %end
 
+%hook TimeView
++ (float)defaultHeight { %log; float r = %orig; NSLog(@" = %f", r); return r; }
+- (id)timeLabel { %log; id r = %orig; NSLog(@" = %@", r); return r; }
+- (double)time { %log; double r = %orig; NSLog(@" = %f", r); return r; }
+- (void)setTime:(double)fp8 { %log; %orig; }
+- (void)setTimeLabelFrame:(struct CGRect)fp8 { %log; %orig; }
+- (void)handleLocaleChange { %log; %orig; }
+- (void)layoutSubviews { %log; %orig; }
+- (void)dealloc { %log; %orig; }
+- (id)init { %log; id r = %orig; NSLog(@" = %@", r); return r; }
+- (void)sizeLabelToFit { %log; %orig; }
+- (void)configureBackground { %log; %orig; }
+- (void)configureTimeLabel { %log; %orig; }
+- (BOOL)showSubseconds { %log; BOOL r = %orig; NSLog(@" = %d", r); return r; }
+%end
+
 %hook TimerControlsView
 
-- (void)setState:(int)fp8 {
+- (void)setTime:(double)fp8 { %log; %orig; }
+- (int)state { %log; int r = %orig; NSLog(@" = %d", r); return r; }
+- (void)handleLocaleChange { %log; %orig; }
+- (void)setTimerToneName:(id)fp8 { %log; %orig; }
+- (void)setCountDownDuration:(double)fp8 { %log; %orig; }
+- (double)countDownDuration { %log; double r = %orig; NSLog(@" = %f", r); return r; }
+- (void)willRotateToInterfaceOrientation:(int)fp8 duration:(double)fp12 { %log; %orig; }
+- (void)dealloc { %log; %orig; }
+- (id)initWithTarget:(id)fp8 { %log; id r = %orig; NSLog(@" = %@", r); return r; }
 
+- (void)setState:(int)fp8 {
+%log;
     if (fp8 == 1) {
 
         // Timer is stopped
 
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
-        dict[@"timeLeft"] = @(0);
+        dict[@"timeLeft"]  = @(0);
+        dict[@"isRunning"] = [NSNumber numberWithBool:NO];
         [dict writeToFile:path atomically:NO];
 
     } else if (fp8 == 2) {
@@ -44,31 +70,33 @@ static NSString *separator = @"-"; // Default separator
         // Timer is paused
 
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
+        dict[@"date"]     = [NSNumber numberWithDouble:[[NSDate date] timeIntervalSinceReferenceDate]];
         dict[@"isPaused"] = [NSNumber numberWithBool:YES];
         [dict writeToFile:path atomically:NO];
 
-    }
+    } else if (fp8 == 3) {
 
-    %orig;
-}
-
-- (void)setTime:(double)fp8 {
-    %orig;
-
-    // Only update the dictionary once per second for better performance
-    if (round(fp8) != tempTimeLeft) {
-
-        // Write current time left to path
-
-        tempTimeLeft = round(fp8);
+        // Timer is started or resumed (or the timer app is opened with timer running)
 
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
-        dict[@"timeLeft"]   = @(tempTimeLeft);
-        dict[@"isPaused"]   = [NSNumber numberWithBool:NO];
-        dict[@"background"] = [NSNumber numberWithBool:NO];
+        if (!dict) dict = [[NSMutableDictionary alloc] init];
+
+        if (![dict[@"isRunning"] boolValue]) {
+
+            // Timer is started
+
+            dict[@"timeLeft"]  = @([self countDownDuration]);
+        }
+
+        dict[@"isRunning"] = [NSNumber numberWithBool:YES];
+        dict[@"isPaused"]  = [NSNumber numberWithBool:NO];
+        dict[@"date"]      = [NSNumber numberWithDouble:[[NSDate date] timeIntervalSinceReferenceDate]];
         [dict writeToFile:path atomically:NO];
     }
+
+    %orig;
 }
+
 
 %end
 
@@ -98,17 +126,23 @@ static void changeTimeFormat();
 
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
 
-    if ([dict[@"background"] boolValue] &&
-        ![dict[@"isPaused"] boolValue] &&
+    if (![dict[@"isPaused"] boolValue] &&
         ([dict[@"timeLeft"] integerValue] > 0)) {
 
-        // If the timer is in the background the countdown must happen here
+        // Count down the timer
 
-        dict[@"timeLeft"] = @([dict[@"timeLeft"] integerValue] - 1);
+        NSDate *dateNow = [NSDate date];
+        NSTimeInterval timeElapsed = [dateNow timeIntervalSinceDate:[[NSDate alloc] initWithTimeIntervalSinceReferenceDate:[dict[@"date"] doubleValue]]];
+        double timeLeft = [dict[@"timeLeft"] doubleValue] - timeElapsed;
+
+        if (timeLeft < 1) timeLeft = 0.0;
+
+        dict[@"date"]     = [NSNumber numberWithDouble:[dateNow timeIntervalSinceReferenceDate]];
+        dict[@"timeLeft"] = @(timeLeft);
         [dict writeToFile:path atomically:NO];
     }
 
-    long timeLeft = [dict[@"timeLeft"] integerValue];
+    long timeLeft = round([dict[@"timeLeft"] doubleValue]);
 
 
     // Append the timer to the clock text
