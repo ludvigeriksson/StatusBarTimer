@@ -114,7 +114,6 @@ static void changeTimeFormat();
     // Append the timer to the clock text
 
     NSDateFormatter* timeItemDateFormatter = MSHookIvar<NSDateFormatter*>(self, "_timeItemDateFormatter");
-    NSLog(@"dateFormat: %@", timeItemDateFormatter.dateFormat);
 
     if (!dict[@"dateFormat"]) {
         changeTimeFormat();
@@ -124,8 +123,6 @@ static void changeTimeFormat();
 
     NSString *append = timeLeft ? [NSString stringWithFormat:@" '%@ %@'", separator, stringFromTime(timeLeft)] : @"";
     NSString *dateFormat = [originalDateFormat stringByAppendingString:append];
-
-    NSLog(@"new dateFormat: %@", dateFormat);
 
     [timeItemDateFormatter setDateFormat:dateFormat];
 
