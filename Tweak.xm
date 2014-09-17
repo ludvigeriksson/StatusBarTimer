@@ -61,9 +61,11 @@ static NSString *separator = @"-"; // Default separator
         // Write current time left to path
 
         tempTimeLeft = round(fp8);
-        NSDictionary *dict = @{ @"timeLeft"   : @(tempTimeLeft),
-                                @"isPaused"   : [NSNumber numberWithBool:NO],
-                                @"background" : [NSNumber numberWithBool:NO] };
+
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
+        dict[@"timeLeft"]   = @(tempTimeLeft);
+        dict[@"isPaused"]   = [NSNumber numberWithBool:NO];
+        dict[@"background"] = [NSNumber numberWithBool:NO];
         [dict writeToFile:path atomically:NO];
     }
 }
@@ -85,6 +87,8 @@ static NSString *stringFromTime(double interval) {
         return [NSString stringWithFormat:@"%02lu", seconds];
     }
 }
+
+static void changeTimeFormat();
 
 %hook SBStatusBarStateAggregator
 
@@ -110,10 +114,18 @@ static NSString *stringFromTime(double interval) {
     // Append the timer to the clock text
 
     NSDateFormatter* timeItemDateFormatter = MSHookIvar<NSDateFormatter*>(self, "_timeItemDateFormatter");
+    NSLog(@"dateFormat: %@", timeItemDateFormatter.dateFormat);
 
-    NSString *dateFormat = @"HH:mm";
+    if (!dict[@"dateFormat"]) {
+        changeTimeFormat();
+    }
+
+    NSString *originalDateFormat = dict[@"dateFormat"];
+
     NSString *append = timeLeft ? [NSString stringWithFormat:@" '%@ %@'", separator, stringFromTime(timeLeft)] : @"";
-    dateFormat = [dateFormat stringByAppendingString:append];
+    NSString *dateFormat = [originalDateFormat stringByAppendingString:append];
+
+    NSLog(@"new dateFormat: %@", dateFormat);
 
     [timeItemDateFormatter setDateFormat:dateFormat];
 
@@ -131,6 +143,7 @@ static NSString *stringFromTime(double interval) {
 
 %end
 
+// Gets called when separator changes in settings
 static void loadPrefs() {
     NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.ludvigeriksson.statusbartimerprefs.plist"];
     if(prefs) {
@@ -138,8 +151,22 @@ static void loadPrefs() {
     }
 }
 
-%ctor
-{
-CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-loadPrefs();
+// Gets called when the time format of the phone changes
+static void changeTimeFormat() {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
+    NSDateFormatter *df = [[NSDateFormatter alloc] init];
+    [df setDateStyle:NSDateFormatterNoStyle];
+    [df setTimeStyle:NSDateFormatterShortStyle];
+    dict[@"dateFormat"] = df.dateFormat;
+    [dict writeToFile:path atomically:NO];
+}
+
+%ctor {
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+    loadPrefs();
+}
+
+%ctor {
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("UIApplicationSignificantTimeChangeNotification"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+    changeTimeFormat();
 }
