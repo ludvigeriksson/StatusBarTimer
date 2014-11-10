@@ -26,33 +26,7 @@ static NSString *separator = @"-"; // Default separator
 
 %end
 
-%hook TimeView
-+ (float)defaultHeight { %log; float r = %orig; NSLog(@" = %f", r); return r; }
-- (id)timeLabel { %log; id r = %orig; NSLog(@" = %@", r); return r; }
-- (double)time { %log; double r = %orig; NSLog(@" = %f", r); return r; }
-- (void)setTime:(double)fp8 { %log; %orig; }
-- (void)setTimeLabelFrame:(struct CGRect)fp8 { %log; %orig; }
-- (void)handleLocaleChange { %log; %orig; }
-- (void)layoutSubviews { %log; %orig; }
-- (void)dealloc { %log; %orig; }
-- (id)init { %log; id r = %orig; NSLog(@" = %@", r); return r; }
-- (void)sizeLabelToFit { %log; %orig; }
-- (void)configureBackground { %log; %orig; }
-- (void)configureTimeLabel { %log; %orig; }
-- (BOOL)showSubseconds { %log; BOOL r = %orig; NSLog(@" = %d", r); return r; }
-%end
-
 %hook TimerControlsView
-
-- (void)setTime:(double)fp8 { %log; %orig; }
-- (int)state { %log; int r = %orig; NSLog(@" = %d", r); return r; }
-- (void)handleLocaleChange { %log; %orig; }
-- (void)setTimerToneName:(id)fp8 { %log; %orig; }
-- (void)setCountDownDuration:(double)fp8 { %log; %orig; }
-- (double)countDownDuration { %log; double r = %orig; NSLog(@" = %f", r); return r; }
-- (void)willRotateToInterfaceOrientation:(int)fp8 duration:(double)fp12 { %log; %orig; }
-- (void)dealloc { %log; %orig; }
-- (id)initWithTarget:(id)fp8 { %log; id r = %orig; NSLog(@" = %@", r); return r; }
 
 - (void)setState:(int)fp8 {
 %log;
@@ -70,7 +44,6 @@ static NSString *separator = @"-"; // Default separator
         // Timer is paused
 
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:path];
-        dict[@"date"]     = [NSNumber numberWithDouble:[[NSDate date] timeIntervalSinceReferenceDate]];
         dict[@"isPaused"] = [NSNumber numberWithBool:YES];
         [dict writeToFile:path atomically:NO];
 
