@@ -1,9 +1,9 @@
 Package: com.ludvigeriksson.statusbartimer
 Name: StatusBarTimer
 Depends: mobilesubstrate
-Version: 0.0.1
+Version: 1.1.0
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
+Description: Displays the timer next to the clock in the status bar.
 Maintainer: Ludvig Eriksson
 Author: Ludvig Eriksson
 Section: Tweaks
