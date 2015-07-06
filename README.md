@@ -5,4 +5,6 @@ StatusBarTimer is a jailbreak tweak that displays the timer next to the clock in
 
 Choose a separator in the settings. Default is a dash '-'.
 
-It is available from BigBoss for free.
+StatusBarTimer is available for free from [BigBoss](http://moreinfo.thebigboss.org/moreinfo/depiction.php?file=statusbartimerDp).
+
+<img src="/Screenshots/1.jpg"/>
