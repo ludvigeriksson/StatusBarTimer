@@ -1,9 +1,19 @@
+static NSString *path = @"/var/mobile/Library/Preferences/com.ludvigeriksson.statusbartimer.stopwatch.plist";
+
 // SpringBoard variables
 static NSString *separator = @"-"; // Default separator
 static BOOL alwaysShowMinutes = NO;
-static NSDate *timerEndDate;
-static NSTimeInterval timeLeft;
 static NSString *dateFormat;
+static NSTimeInterval timeToAppend;
+
+// Timer variables
+static BOOL enabledForTimer = YES;
+static NSDate *timerEndDate = nil;
+
+// Stopwatch variables
+static BOOL enabledForStopwatch = YES;
+static NSDate *stopwatchStartDate = nil;
+
 
 // Helper functions
 static void changeTimeFormat();
@@ -24,18 +34,21 @@ static NSString *stringFromTime(double interval);
 %hook SBStatusBarStateAggregator
 
 - (void)_updateTimeItems {
-
     // Calculate time left based on timer end date
-    if (timerEndDate) {
-        timeLeft = [timerEndDate timeIntervalSinceDate:[NSDate date]];
-        if (timeLeft < 0) timeLeft = 0;
+    if (timerEndDate != nil && enabledForTimer) {
+        timeToAppend = [timerEndDate timeIntervalSinceDate:[NSDate date]];
+        if (timeToAppend < 0) timeToAppend = 0;
     } else {
-        timeLeft = 0;
+        timeToAppend = 0;
+    }
+
+    if (timeToAppend == 0 && stopwatchStartDate != nil && enabledForStopwatch) {
+        timeToAppend = [[NSDate date] timeIntervalSinceDate:stopwatchStartDate];
     }
 
     // Append the timer to the clock text
 
-    NSString *append = (timeLeft > 0) ? [NSString stringWithFormat:@" '%@ %@'", separator, stringFromTime(timeLeft)] : @"";
+    NSString *append = (timeToAppend > 0) ? [NSString stringWithFormat:@" '%@ %@'", separator, stringFromTime(timeToAppend)] : @"";
     NSString *newDateFormat = [dateFormat stringByAppendingString:append];
 
     NSDateFormatter* timeItemDateFormatter = MSHookIvar<NSDateFormatter*>(self, "_timeItemDateFormatter");
@@ -59,6 +72,31 @@ static NSString *stringFromTime(double interval);
 %end // group SpringBoard
 
 
+%group Stopwatch
+
+%hook StopWatchViewController
+
+-(void)setMode:(int)mode { 
+    %orig; 
+
+    if (mode == 2) {
+        // Timer started or resumed
+        double currentInterval = MSHookIvar<double>(self, "_currentInterval");
+
+        NSDictionary *dict = @{ @"currentInterval" : @(currentInterval) };
+        [dict writeToFile:path atomically:NO];
+
+        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.ludvigeriksson.statusbartimer/stopwatchstarted"), (__bridge const void *)(self), nil, TRUE);
+    } else {
+        // Timer stopped or reset
+        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.ludvigeriksson.statusbartimer/stopwatchstopped"), (__bridge const void *)(self), nil, TRUE);
+    }
+}
+
+%end
+
+%end // group Stopwatch
+
 // Format the time left
 static NSString *stringFromTime(double interval) {
     long time    = round(interval);
@@ -77,11 +115,17 @@ static NSString *stringFromTime(double interval) {
 // Gets called when separator changes in settings
 static void loadPrefs() {
     CFPreferencesAppSynchronize(CFSTR("com.ludvigeriksson.statusbartimerprefs"));
-    if (CFPreferencesCopyAppValue(CFSTR("SBTAlwaysShowMinutes"), CFSTR("com.ludvigeriksson.statusbartimerprefs"))) {
-        alwaysShowMinutes = [(id)CFPreferencesCopyAppValue(CFSTR("SBTAlwaysShowMinutes"), CFSTR("com.ludvigeriksson.statusbartimerprefs")) boolValue];
+    if (CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTAlwaysShowMinutes"), CFSTR("com.ludvigeriksson.statusbartimerprefs")))) {
+        alwaysShowMinutes = [(id)CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTAlwaysShowMinutes"), CFSTR("com.ludvigeriksson.statusbartimerprefs"))) boolValue];
     }
-    if (CFPreferencesCopyAppValue(CFSTR("SBTSeparator"), CFSTR("com.ludvigeriksson.statusbartimerprefs"))) {
-        separator = (id)CFPreferencesCopyAppValue(CFSTR("SBTSeparator"), CFSTR("com.ludvigeriksson.statusbartimerprefs"));
+    if (CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTSeparator"), CFSTR("com.ludvigeriksson.statusbartimerprefs")))) {
+        separator = (id)CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTSeparator"), CFSTR("com.ludvigeriksson.statusbartimerprefs")));
+    }
+    if (CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTEnableForTimer"), CFSTR("com.ludvigeriksson.statusbartimerprefs")))) {
+        enabledForTimer = [(id)CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTEnableForTimer"), CFSTR("com.ludvigeriksson.statusbartimerprefs"))) boolValue];
+    }
+    if (CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTEnableForStopwatch"), CFSTR("com.ludvigeriksson.statusbartimerprefs")))) {
+        enabledForStopwatch = [(id)CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("SBTEnableForStopwatch"), CFSTR("com.ludvigeriksson.statusbartimerprefs"))) boolValue];
     }
 }
 
@@ -91,6 +135,16 @@ static void changeTimeFormat() {
     [df setDateStyle:NSDateFormatterNoStyle];
     [df setTimeStyle:NSDateFormatterShortStyle];
     dateFormat = df.dateFormat;
+}
+
+static void stopwatchStarted() {
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
+    stopwatchStartDate = [NSDate dateWithTimeIntervalSinceNow:-[dict[@"currentInterval"] doubleValue]];
+    NSLog(@"Setting stopwatchStartDate to: %@", stopwatchStartDate);
+}
+
+static void stopwatchStopped() {
+    stopwatchStartDate = nil;
 }
 
 // Subscribe to notifications when tweak is loaded
@@ -103,6 +157,13 @@ static void changeTimeFormat() {
             CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)changeTimeFormat, CFSTR("UIApplicationSignificantTimeChangeNotification"), NULL, CFNotificationSuspensionBehaviorCoalesce);        
             loadPrefs();
             changeTimeFormat();
+
+            CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)stopwatchStarted, CFSTR("com.ludvigeriksson.statusbartimer/stopwatchstarted"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+            CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)stopwatchStopped, CFSTR("com.ludvigeriksson.statusbartimer/stopwatchstopped"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+        }
+        if ([bundleIdentifier isEqualToString:@"com.apple.mobiletimer"]) {
+            %init(Stopwatch);
         }
     }
 }
+
