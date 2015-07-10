@@ -19,7 +19,7 @@
 }
 
 - (void)donate {
-	NSURL *url = [NSURL URLWithString:@"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ludvigeriksson%40icloud%2ecom&lc=SE&item_name=Donation%20to%20Ludvig%20Eriksson&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"];
+	NSURL *url = [NSURL URLWithString:@"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ludvigeriksson%40icloud%2ecom&lc=US&item_name=Donation%20to%20Ludvig%20Eriksson&no_note=0&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHostedGuest"];
 	[[UIApplication sharedApplication] openURL:url];
 }
 

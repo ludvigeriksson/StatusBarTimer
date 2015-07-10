@@ -1,7 +1,7 @@
 Package: com.ludvigeriksson.statusbartimer
 Name: StatusBarTimer
 Depends: mobilesubstrate
-Version: 1.2.1
+Version: 1.2.2
 Architecture: iphoneos-arm
 Description: Displays the timer next to the clock in the status bar.
 Maintainer: Ludvig Eriksson
