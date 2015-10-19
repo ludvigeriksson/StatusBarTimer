@@ -1,5 +1,5 @@
 // SpringBoard variables
-static NSString *separator = @"-"; // Default separator
+static NSString *separator = @"|"; // Default separator
 static BOOL alwaysShowMinutes = NO;
 static NSString *oldDateFormat = nil;
 static BOOL shouldRestoreDateFormat = NO;
@@ -21,7 +21,7 @@ static NSString *stringFromTime(double interval);
 static NSString *distributedMessagingCenterName = @"com.ludvigeriksson.statusbartimer_distributedmessagingcenter";
 static NSString *stopwatchStartedNotification   = @"stopwatchStartedNotification";
 static NSString *stopwatchStoppedNotification   = @"stopwatchStoppedNotification";
-static CFStringRef settingsChangedNotification = CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged");
+static CFStringRef settingsChangedNotification  = CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged");
 
 static NSString *stopwatchCurrentTimeIntervalKey = @"stopwatchCurrentTimeIntervalKey";
 static CFStringRef statusBarTimerPrefsKey        = CFSTR("com.ludvigeriksson.statusbartimerprefs");
@@ -30,8 +30,19 @@ static CFStringRef separatorKey                  = CFSTR("SBTSeparator");
 static CFStringRef enabledForTimerKey            = CFSTR("SBTEnableForTimer");
 static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch");
 
-#import "AppSupport/CPDistributedMessagingCenter.h"
-#import "SpringBoard/SBStatusBarStateAggregator.h"
+@interface CPDistributedMessagingCenter : NSObject
++ (CPDistributedMessagingCenter *)centerNamed:(NSString *)name;
+- (void)runServerOnCurrentThread;
+- (void)registerForMessageName:(NSString*)messageName target:(id)target selector:(SEL)selector;
+- (BOOL)sendMessageName:(NSString*)name userInfo:(NSDictionary*)info;
+@end
+
+@interface SBStatusBarStateAggregator : NSObject {
+    NSTimer *_timeItemTimer;
+}
+- (void)_updateTimeItems;
+-(void)_restartTimeItemTimer;
+@end
 
 %group SpringBoardHooks
 
@@ -44,11 +55,11 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
     [messagingCenter runServerOnCurrentThread];
 
     // Register Messages
-    [messagingCenter registerForMessageName:stopwatchStartedNotification 
-       target:self 
+    [messagingCenter registerForMessageName:stopwatchStartedNotification
+       target:self
        selector:@selector(handleMessageNamed:withUserInfo:)];
-    [messagingCenter registerForMessageName:stopwatchStoppedNotification 
-       target:self 
+    [messagingCenter registerForMessageName:stopwatchStoppedNotification
+       target:self
        selector:@selector(handleMessageNamed:withUserInfo:)];
 
     // Delete UIStatusBar cache, which prevents status bar updates
@@ -56,7 +67,7 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
     NSLog(@"StatusBarTimer: Removing UIStatusBar cache (contents of %@)", cachePath);
 
     NSFileManager* fileManager = [NSFileManager defaultManager];
-    NSDirectoryEnumerator* enumerator = [fileManager enumeratorAtPath:cachePath];    
+    NSDirectoryEnumerator* enumerator = [fileManager enumeratorAtPath:cachePath];
     NSError* error = nil;
     BOOL result;
 
@@ -65,7 +76,7 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
         result = [fileManager removeItemAtPath:[cachePath stringByAppendingPathComponent:file] error:&error];
         if (!result && error) {
             NSLog(@"StatusBarTimer: Error removing file %@: %@", file, error);
-        }   
+        }
     }
 }
 
@@ -109,8 +120,6 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
         if (timerEndDate != nil) {
             timeToAppend = [timerEndDate timeIntervalSinceDate:[NSDate date]];
             if (timeToAppend < 0) timeToAppend = 0;
-        } else {
-            // timeToAppend = 0;
         }
     }
 
@@ -125,7 +134,7 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
         if (shouldRestoreDateFormat) {
             shouldRestoreDateFormat = NO;
             timeItemDateFormatter.dateFormat = oldDateFormat;
-        } 
+        }
         if (shouldSaveDateFormat) {
             oldDateFormat = timeItemDateFormatter.dateFormat;
         }
@@ -171,8 +180,8 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
 
 %hook StopWatchViewController
 
--(void)setMode:(int)mode { 
-    %orig; 
+-(void)setMode:(int)mode {
+    %orig;
 
     CPDistributedMessagingCenter *messagingCenter = [CPDistributedMessagingCenter centerNamed:distributedMessagingCenterName];
 
@@ -208,7 +217,7 @@ static NSString *stringFromTime(double interval) {
     }
 }
 
-// Gets called when separator changes in settings
+// Gets called when settings changes
 static void loadPrefs() {
     CFPreferencesAppSynchronize(statusBarTimerPrefsKey);
     if (CFBridgingRelease(CFPreferencesCopyAppValue(alwaysShowMinutesKey, statusBarTimerPrefsKey))) {

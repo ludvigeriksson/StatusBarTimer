@@ -4,12 +4,17 @@
 <dict>
 	<key>items</key>
 	<array>
+
+		<!-- ENABLE GROUP -->
+
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Enable for</string>
+			<string>ENABLE_FOR</string>
 		</dict>
+
+		<!-- Timer -->
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
@@ -20,10 +25,12 @@
 			<key>key</key>
 			<string>SBTEnableForTimer</string>
 			<key>label</key>
-			<string>Timer</string>
+			<string>TIMER</string>
 			<key>PostNotification</key>
 			<string>com.ludvigeriksson.statusbartimerprefs/settingschanged</string>
 		</dict>
+
+		<!-- Stopwatch -->
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
@@ -34,16 +41,21 @@
 			<key>key</key>
 			<string>SBTEnableForStopwatch</string>
 			<key>label</key>
-			<string>Stopwatch</string>
+			<string>STOPWATCH</string>
 			<key>PostNotification</key>
 			<string>com.ludvigeriksson.statusbartimerprefs/settingschanged</string>
 		</dict>
+
+		<!-- APPEARANCE GROUP -->
+
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Appearance</string>
+			<string>APPEARANCE</string>
 		</dict>
+
+		<!-- Separator -->
 		<dict>
 			<key>cell</key>
 			<string>PSEditTextCell</string>
@@ -52,14 +64,16 @@
 			<key>key</key>
 			<string>SBTSeparator</string>
 			<key>label</key>
-			<string>Separator</string>
+			<string>SEPARATOR</string>
 			<key>default</key>
-			<string>-</string>
+			<string>|</string>
 			<key>PostNotification</key>
 			<string>com.ludvigeriksson.statusbartimerprefs/settingschanged</string>
 			<key>cellClass</key>
 			<string>StatusBarTimerTextCell</string>
 		</dict>
+
+		<!-- Always show minutes -->
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
@@ -70,32 +84,58 @@
 			<key>key</key>
 			<string>SBTAlwaysShowMinutes</string>
 			<key>label</key>
-			<string>Always show minutes</string>
+			<string>ALWAYS_SHOW_MINUTES</string>
 			<key>PostNotification</key>
 			<string>com.ludvigeriksson.statusbartimerprefs/settingschanged</string>
 		</dict>
+
+		<!-- DEVELOPER GROUP -->
+
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>DEVELOPER</string>
 			<key>footerText</key>
-			<string>Copyright 2014-2015 Ludvig Eriksson</string>
+			<string>COPYRIGHT_NOTICE</string>
 		</dict>
+
+		<!-- Visit website -->
 		<dict>
 			<key>cell</key>
 			<string>PSButtonCell</string>
 			<key>label</key>
-			<string>Contact</string>
+			<string>VISIT_WEBSITE</string>
 			<key>action</key>
-			<string>contactMe</string>
+			<string>openWebsite</string>
+			<key>icon</key>
+			<string>WebsiteIcon.png</string>
 		</dict>
+
+		<!-- Contact -->
 		<dict>
 			<key>cell</key>
 			<string>PSButtonCell</string>
 			<key>label</key>
-			<string>Donate</string>
+			<string>CONTACT</string>
 			<key>action</key>
-			<string>donate</string>
+			<string>contact</string>
+			<key>icon</key>
+			<string>MailIcon.png</string>
 		</dict>
+
+		<!-- Donate via PayPal -->
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>DONATE_PAYPAL</string>
+			<key>action</key>
+			<string>donatePayPal</string>
+			<key>icon</key>
+			<string>PayPalIcon.png</string>
+		</dict>
+
 	</array>
 	<key>title</key>
 	<string>StatusBarTimer</string>

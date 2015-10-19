@@ -1,0 +1,26 @@
+<plist version="1.0">
+<dict>
+	<key>ENABLE_FOR</key>
+	<string>Enable for</string>
+	<key>TIMER</key>
+	<string>Timer</string>
+	<key>STOPWATCH</key>
+	<string>Stopwatch</string>
+	<key>APPEARANCE</key>
+	<string>Appearance</string>
+	<key>SEPARATOR</key>
+	<string>Separator</string>
+	<key>ALWAYS_SHOW_MINUTES</key>
+	<string>Always show minutes</string>
+	<key>DEVELOPER</key>
+	<string>Developer</string>
+	<key>VISIT_WEBSITE</key>
+	<string>Visit website</string>
+	<key>CONTACT</key>
+	<string>Contact</string>
+	<key>DONATE_PAYPAL</key>
+	<string>Donate via PayPal</string>
+	<key>COPYRIGHT_NOTICE</key>
+	<string>© 2015 Ludvig Eriksson</string>
+</dict>
+</plist>
