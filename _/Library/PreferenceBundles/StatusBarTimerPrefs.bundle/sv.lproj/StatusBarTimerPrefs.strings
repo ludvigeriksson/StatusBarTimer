@@ -20,7 +20,5 @@
 	<string>Kontakt</string>
 	<key>DONATE_PAYPAL</key>
 	<string>Donera via PayPal</string>
-	<key>COPYRIGHT_NOTICE</key>
-	<string>© 2015 Ludvig Eriksson</string>
 </dict>
 </plist>

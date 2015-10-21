@@ -1,5 +1,5 @@
-SHARED_CFLAGS = -fobjc-arc
-ARCHS = armv7 armv7s arm64
+StatusBarTimer_CFLAGS = -fobjc-arc
+ARCHS = armv7 arm64
 
 # Uncomment before release to remove build number
 PACKAGE_VERSION = $(THEOS_PACKAGE_BASE_VERSION)

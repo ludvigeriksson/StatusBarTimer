@@ -1,5 +1,5 @@
 // SpringBoard variables
-static NSString *separator = @"|"; // Default separator
+static NSString *separator = @"-"; // Default separator
 static BOOL alwaysShowMinutes = NO;
 static NSString *oldDateFormat = nil;
 static BOOL shouldRestoreDateFormat = NO;
@@ -21,7 +21,7 @@ static NSString *stringFromTime(double interval);
 static NSString *distributedMessagingCenterName = @"com.ludvigeriksson.statusbartimer_distributedmessagingcenter";
 static NSString *stopwatchStartedNotification   = @"stopwatchStartedNotification";
 static NSString *stopwatchStoppedNotification   = @"stopwatchStoppedNotification";
-static CFStringRef settingsChangedNotification  = CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged");
+static CFStringRef settingsChangedNotification = CFSTR("com.ludvigeriksson.statusbartimerprefs/settingschanged");
 
 static NSString *stopwatchCurrentTimeIntervalKey = @"stopwatchCurrentTimeIntervalKey";
 static CFStringRef statusBarTimerPrefsKey        = CFSTR("com.ludvigeriksson.statusbartimerprefs");
@@ -29,6 +29,9 @@ static CFStringRef alwaysShowMinutesKey          = CFSTR("SBTAlwaysShowMinutes")
 static CFStringRef separatorKey                  = CFSTR("SBTSeparator");
 static CFStringRef enabledForTimerKey            = CFSTR("SBTEnableForTimer");
 static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch");
+
+// ------------------------------------
+// Included to avoid needing headers
 
 @interface CPDistributedMessagingCenter : NSObject
 + (CPDistributedMessagingCenter *)centerNamed:(NSString *)name;
@@ -41,8 +44,10 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
     NSTimer *_timeItemTimer;
 }
 - (void)_updateTimeItems;
--(void)_restartTimeItemTimer;
+- (void)_restartTimeItemTimer;
 @end
+
+// ------------------------------------
 
 %group SpringBoardHooks
 

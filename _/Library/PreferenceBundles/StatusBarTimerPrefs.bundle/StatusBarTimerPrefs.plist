@@ -96,8 +96,6 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>DEVELOPER</string>
-			<key>footerText</key>
-			<string>COPYRIGHT_NOTICE</string>
 		</dict>
 
 		<!-- Visit website -->
