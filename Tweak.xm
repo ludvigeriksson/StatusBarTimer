@@ -30,24 +30,8 @@ static CFStringRef separatorKey                  = CFSTR("SBTSeparator");
 static CFStringRef enabledForTimerKey            = CFSTR("SBTEnableForTimer");
 static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch");
 
-// ------------------------------------
-// Included to avoid needing headers
-
-@interface CPDistributedMessagingCenter : NSObject
-+ (CPDistributedMessagingCenter *)centerNamed:(NSString *)name;
-- (void)runServerOnCurrentThread;
-- (void)registerForMessageName:(NSString*)messageName target:(id)target selector:(SEL)selector;
-- (BOOL)sendMessageName:(NSString*)name userInfo:(NSDictionary*)info;
-@end
-
-@interface SBStatusBarStateAggregator : NSObject {
-    NSTimer *_timeItemTimer;
-}
-- (void)_updateTimeItems;
-- (void)_restartTimeItemTimer;
-@end
-
-// ------------------------------------
+#import "AppSupport/CPDistributedMessagingCenter.h"
+#import "SpringBoard/SBStatusBarStateAggregator.h"
 
 %group SpringBoardHooks
 
@@ -125,6 +109,8 @@ static CFStringRef enabledForStopwatchKey        = CFSTR("SBTEnableForStopwatch"
         if (timerEndDate != nil) {
             timeToAppend = [timerEndDate timeIntervalSinceDate:[NSDate date]];
             if (timeToAppend < 0) timeToAppend = 0;
+        } else {
+            // timeToAppend = 0;
         }
     }
 
@@ -222,7 +208,7 @@ static NSString *stringFromTime(double interval) {
     }
 }
 
-// Gets called when settings changes
+// Gets called when separator changes in settings
 static void loadPrefs() {
     CFPreferencesAppSynchronize(statusBarTimerPrefsKey);
     if (CFBridgingRelease(CFPreferencesCopyAppValue(alwaysShowMinutesKey, statusBarTimerPrefsKey))) {
